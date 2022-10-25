@@ -1,9 +1,10 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
+from info import AUTH_CHANNEL, LONG_DROPLINK_URL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, SHORTENER_API
 from imdb import IMDb
 import asyncio
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardButton
+from pyrogram import enums
 from typing import Union
 import re
 import os
@@ -13,7 +14,7 @@ from pyrogram.types import InlineKeyboardButton
 from database.users_chats_db import db
 from bs4 import BeautifulSoup
 import requests
-
+import shortzy
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -55,6 +56,7 @@ async def is_subscribed(bot, query):
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
+        # https://t.me/GetTGLink/4183
         query = (query.strip()).lower()
         title = query
         year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
@@ -401,3 +403,12 @@ def humanbytes(size):
         size /= power
         n += 1
     return str(round(size, 2)) + " " + Dic_powerN[n] + 'B'
+
+shortz = shortzy.Shortzy(SHORTENER_API, "shorturllink.in")
+async def get_shortlink(link):
+    if SHORTENER_API:
+        if LONG_DROPLINK_URL == "True" or LONG_DROPLINK_URL is True:
+            return await shortz.get_quick_link(link)
+        else:
+            return await shortz.convert(link, silently_fail=False)
+        return link
